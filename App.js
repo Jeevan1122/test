@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Menu from './Menu';
 import CommandPanel from './CommandPanel';
-import Chatbot from './components/Chatbot'; // Import the Chatbot component
 import './Dashboard.css';
 
 const App = () => {
@@ -17,11 +16,6 @@ const App = () => {
       <div className="main-content">
         <Menu commands={commands} onSelectCommand={setSelectedCommand} />
         <CommandPanel command={selectedCommand} />
-      </div>
-
-      {/* Chatbot Integration */}
-      <div className="chatbot-container">
-        <Chatbot />
       </div>
     </div>
   );
