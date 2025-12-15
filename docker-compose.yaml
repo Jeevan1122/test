@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  react-app:
+    build: .
+    ports:
+      - "5173:5173"
+
+  rasa-server:
+    build: ./rasa-chatbot
+    ports:
+      - "5005:5005"
+
+  node-server:
+    build: ./Backend
+    ports:
+      - "3001:3001"
+
+  mcp-server:
+    build: ./mcp-server
+    ports:
+      - "8190:8190"
+
+

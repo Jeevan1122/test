@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: rasa_user
+      POSTGRES_PASSWORD: rasa_123
+      POSTGRES_DB: rasa_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rasa_user -d rasa_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # React Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+      - rasa
+    restart: unless-stopped
+
+  # Node.js Backend
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DB_URL=postgres://rasa_user:rasa_123@db:5432/rasa_db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker-in-Docker (Trivy)
+    restart: unless-stopped
+
+  # Rasa Chatbot Server
+  rasa:
+    build:
+      context: ./rasa-chatbot
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./rasa-chatbot/models:/app/models
+    restart: unless-stopped
+
+  # Rasa Actions Server
+  rasa-actions:
+    build:
+      context: ./rasa-chatbot
+      dockerfile: Dockerfile
+    ports:
+      - "5055:5055"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    command: ["rasa", "run", "actions", "--port", "5055"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  default:
+    name: yottasecure-network
+
+
